@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎁 アンケートご回答ありがとうございます！</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Fredoka+One&display=swap');
+
+  :root {
+    --green: #00a651;
+    --green-dark: #007a3d;
+    --green-light: #e8f5ee;
+    --gold: #f5a623;
+    --red: #e74c3c;
+    --white: #ffffff;
+    --text: #1a2e1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: linear-gradient(135deg, #e8f5ee 0%, #fff8e7 50%, #e8f5ee 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .logo {
+    font-size: 12px;
+    color: var(--green);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.7;
+  }
+
+  .title {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .wheel-wrapper {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto 24px;
+  }
+
+  canvas#wheel {
+    display: block;
+    border-radius: 50%;
+    box-shadow: 0 8px 32px rgba(0,166,81,0.25);
+  }
+
+  .pointer {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    font-size: 32px;
+    line-height: 1;
+  }
+
+  .spin-btn {
+    background: linear-gradient(135deg, var(--green), var(--green-dark));
+    color: white;
+    border: none;
+    padding: 16px 48px;
+    border-radius: 50px;
+    font-size: 17px;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,166,81,0.35);
+    transition: all 0.2s;
+    margin-bottom: 20px;
+  }
+
+  .spin-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0,166,81,0.45);
+  }
+
+  .spin-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .result-card {
+    display: none;
+    border-radius: 20px;
+    padding: 28px 24px;
+    margin-top: 8px;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .result-card.win {
+    background: linear-gradient(135deg, #fff8e7, #fff3d0);
+    border: 2px solid var(--gold);
+  }
+
+  .result-card.lose {
+    background: var(--green-light);
+    border: 2px solid #b8dcc8;
+  }
+
+  .result-emoji { font-size: 52px; margin-bottom: 12px; display: block; }
+
+  .result-title {
+    font-size: 22px;
+    font-weight: 900;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+
+  .result-title.win { color: #c17f00; }
+
+  .result-desc {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.7;
+  }
+
+  .contact-box {
+    margin-top: 16px;
+    background: white;
+    border-radius: 12px;
+    padding: 14px 18px;
+    border: 1px solid #f0d890;
+  }
+
+  .contact-box p { font-size: 13px; color: #888; margin-bottom: 4px; }
+
+  .contact-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--green-dark);
+  }
+
+  .tullys-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 2px solid var(--green);
+    border-radius: 50px;
+    padding: 8px 16px;
+    margin: 12px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green-dark);
+  }
+
+  .probability-note {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 12px;
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.8) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    animation: confettiFall 3s ease-in forwards;
+    z-index: 100;
+    border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo">WF Division × MBA Research</div>
+  <div class="title">アンケートご回答<br>ありがとうございます！🎉</div>
+  <div class="subtitle">抽選チャンスを1回プレゼント！<br>ボタンを押してホイールを回してください</div>
+
+  <div class="wheel-wrapper">
+    <div class="pointer">▼</div>
+    <canvas id="wheel" width="300" height="300"></canvas>
+  </div>
+
+  <button class="spin-btn" id="spinBtn" onclick="spin()">🎯 回す！</button>
+
+  <div class="result-card win" id="winCard">
+    <span class="result-emoji">🎉</span>
+    <div class="result-title win">おめでとうございます！当選！</div>
+    <div class="tullys-badge">☕ タリーズコーヒー 500円分</div>
+    <div class="result-desc">ギフトカードが当たりました！<br>以下の担当者までご連絡ください。</div>
+    <div class="contact-box">
+      <p>担当者 / Liên hệ</p>
+      <div class="contact-name">ngannt95</div>
+    </div>
+  </div>
+
+  <div class="result-card lose" id="loseCard">
+    <span class="result-emoji">😊</span>
+    <div class="result-title">ありがとうございました！</div>
+    <div class="result-desc">今回は残念でしたが、<br>ご参加いただきありがとうございます！<br><br>アンケート結果は後日WF全体と共有します。<br>一緒にAI活用を改善していきましょう！</div>
+  </div>
+
+  <div class="probability-note">当選確率 15%　|　1人1回限り</div>
+</div>
+
+<script>
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const size = 300;
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = 140;
+
+  // Segments: index 0 = WIN, rest = lose
+  const segments = [
+    { label: '当選！🎉', color: '#f5a623', textColor: '#7a5200', win: true },
+    { label: 'また今度', color: '#00a651', textColor: '#ffffff', win: false },
+    { label: 'また今度', color: '#2ecc71', textColor: '#ffffff', win: false },
+    { label: 'また今度', color: '#27ae60', textColor: '#ffffff', win: false },
+    { label: 'また今度', color: '#52d68a', textColor: '#ffffff', win: false },
+    { label: 'また今度', color: '#00a651', textColor: '#ffffff', win: false },
+    { label: 'また今度', color: '#27ae60', textColor: '#ffffff', win: false },
+  ];
+
+  const numSeg = segments.length;
+  const arcSize = (2 * Math.PI) / numSeg;
+
+  // Pointer is at top = -π/2
+  // We track rotation offset
+  let rotation = 0;
+  let isSpinning = false;
+  let hasSpun = false;
+
+  function drawWheel(rot) {
+    ctx.clearRect(0, 0, size, size);
+
+    for (let i = 0; i < numSeg; i++) {
+      const startAngle = rot + i * arcSize;
+      const endAngle = startAngle + arcSize;
+      const seg = segments[i];
+
+      // Draw segment
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, radius, startAngle, endAngle);
+      ctx.closePath();
+      ctx.fillStyle = seg.color;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw text — horizontal, readable
+      const midAngle = startAngle + arcSize / 2;
+      const textRadius = radius * 0.68;
+      const tx = cx + Math.cos(midAngle) * textRadius;
+      const ty = cy + Math.sin(midAngle) * textRadius;
+
+      ctx.save();
+      ctx.translate(tx, ty);
+      // Rotate text to be readable (flip if in bottom half)
+      let textAngle = midAngle;
+      if (midAngle > Math.PI / 2 && midAngle < 3 * Math.PI / 2) {
+        textAngle = midAngle + Math.PI;
+      }
+      ctx.rotate(textAngle);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = seg.textColor;
+      ctx.font = seg.win ? 'bold 13px Noto Sans JP, sans-serif' : '12px Noto Sans JP, sans-serif';
+      ctx.fillText(seg.label, 0, 0);
+      ctx.restore();
+    }
+
+    // Outer ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    // Center circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, 28, 0, 2 * Math.PI);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+    ctx.strokeStyle = '#00a651';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.fillStyle = '#00a651';
+    ctx.font = 'bold 11px Noto Sans JP, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('GO!', cx, cy);
+  }
+
+  drawWheel(rotation);
+
+  function getWinningSegment(rot) {
+    // Pointer at top = angle -π/2 from canvas 0
+    // Normalize rotation to find which segment is at top
+    const pointerAngle = -Math.PI / 2;
+    // Adjust for rotation
+    let normalized = ((pointerAngle - rot) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    const segIndex = Math.floor(normalized / arcSize) % numSeg;
+    return segIndex;
+  }
+
+  function spin() {
+    if (isSpinning || hasSpun) return;
+    isSpinning = true;
+    hasSpun = true;
+
+    document.getElementById('spinBtn').disabled = true;
+
+    // Determine win/lose (15% chance)
+    const isWin = Math.random() < 0.15;
+
+    // Target segment index
+    const targetIndex = isWin ? 0 : (1 + Math.floor(Math.random() * (numSeg - 1)));
+
+    // Calculate how much to rotate so targetIndex lands at pointer (top = -π/2)
+    // Current angle of segment i center = rotation + i * arcSize + arcSize/2
+    // We want: rotation_final + targetIndex * arcSize + arcSize/2 = -π/2 + 2πk
+    // rotation_final = -π/2 - targetIndex * arcSize - arcSize/2 + 2πk
+
+    const extraSpins = (6 + Math.floor(Math.random() * 4)) * 2 * Math.PI;
+    const targetRotation = -Math.PI / 2 - targetIndex * arcSize - arcSize / 2 - extraSpins;
+
+    const duration = 5000;
+    const startTime = performance.now();
+    const startRotation = rotation;
+
+    function easeOut(t) {
+      return 1 - Math.pow(1 - t, 4);
+    }
+
+    function animate(now) {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      rotation = startRotation + (targetRotation - startRotation) * easeOut(t);
+      drawWheel(rotation);
+
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        rotation = targetRotation;
+        drawWheel(rotation);
+        isSpinning = false;
+        setTimeout(() => showResult(isWin), 500);
+      }
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  function showResult(isWin) {
+    if (isWin) {
+      document.getElementById('winCard').style.display = 'block';
+      launchConfetti();
+    } else {
+      document.getElementById('loseCard').style.display = 'block';
+    }
+    document.getElementById('winCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document.getElementById('loseCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function launchConfetti() {
+    const colors = ['#f5a623', '#00a651', '#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#fff'];
+    for (let i = 0; i < 100; i++) {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.left = Math.random() * 100 + 'vw';
+        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+        el.style.animationDuration = (2 + Math.random() * 2) + 's';
+        el.style.animationDelay = Math.random() * 0.8 + 's';
+        el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        el.style.width = (8 + Math.random() * 8) + 'px';
+        el.style.height = (8 + Math.random() * 8) + 'px';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 5000);
+      }, i * 15);
+    }
+  }
+</script>
+</body>
+</html>
